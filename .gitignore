@@ -1,0 +1,13 @@
+node_modules
+dist
+.env
+.env.local
+*.local
+
+# Local Netlify folder
+.netlify
+.env.example
+.cursorindexingignore
+.specstory/statistics.json
+.specstory/cli/config.toml
+.specstory/history/2026-05-25_20-32-28Z-real-time-vehicle-tracking-on-openstreetmap.md

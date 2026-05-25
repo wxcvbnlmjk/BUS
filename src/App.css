@@ -1,0 +1,27 @@
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+}
+
+.bus-marker.leaflet-div-icon {
+  background: transparent;
+  border: none;
+}
+
+.bus-marker .bus-marker-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #c8102e;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  font-family: system-ui, sans-serif;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  line-height: 1;
+}

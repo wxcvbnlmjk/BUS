@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/api/vehiclemonitoring.ts","./src/components/busmap.tsx","./src/components/linefilter.tsx","./src/components/vehiclemarkers.tsx","./src/types/siri.ts","./src/utils/lineref.ts"],"errors":true,"version":"5.7.3"}
