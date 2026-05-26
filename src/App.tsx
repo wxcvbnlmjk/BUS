@@ -28,7 +28,10 @@ const theme = createTheme({
 
 function App() {
   const [vehicles, setVehicles] = useState<BusVehicle[]>([]);
-  const [selectedLine, setSelectedLine] = useState<string>('all');
+  const [selectedLine, setSelectedLine] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'all';
+    return window.localStorage.getItem('tcl_selectedLine') ?? 'all';
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -51,6 +54,15 @@ function App() {
     const interval = setInterval(() => void loadVehicles(), POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [loadVehicles]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem('tcl_selectedLine', selectedLine);
+    } catch {
+      // localStorage peut être bloqué en mode navigation privée
+    }
+  }, [selectedLine]);
 
   const availableLines = useMemo(() => {
     const lines = new Set(vehicles.map((v) => v.lineNumber));

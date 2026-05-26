@@ -11,3 +11,7 @@ dist
 .specstory/statistics.json
 .specstory/cli/config.toml
 .specstory/history/2026-05-25_20-32-28Z-real-time-vehicle-tracking-on-openstreetmap.md
+.specstory/.project.json
+.vscode/settings.json
+public/all.json
+.specstory/.project.json

@@ -1,10 +1,23 @@
+import { getArretsIndex, getStopName } from './arrets';
 import type { BusVehicle, SiriVehicleMonitoringResponse } from '../types/siri';
+import { formatSiriDelay } from '../utils/delay';
 import { parseLineNumber } from '../utils/lineRef';
 
 const API_URL = '/api/siri/vehicle-monitoring.json';
 
 export async function fetchVehicles(): Promise<BusVehicle[]> {
-  const response = await fetch(API_URL);
+  // const dataUrl = import.meta.env.PROD ? API_URL : 'all.json';
+  const dataUrl = API_URL;
+  
+  const [response, arrets] = await Promise.all([
+    fetch(dataUrl, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+      },
+    }),
+    getArretsIndex(),
+  ]);
   if (!response.ok) {
     throw new Error(`API SIRI : ${response.status} ${response.statusText}`);
   }
@@ -31,7 +44,15 @@ export async function fetchVehicles(): Promise<BusVehicle[]> {
       lat: loc.Latitude,
       lng: loc.Longitude,
       bearing: journey.Bearing,
-      direction: journey.DirectionRef?.value,
+      destinationStopName: getStopName(
+        arrets,
+        journey.DestinationRef?.value,
+      ),
+      nextStopName: getStopName(
+        arrets,
+        journey.MonitoredCall?.StopPointRef?.value,
+      ),
+      delayLabel: formatSiriDelay(journey.Delay),
       recordedAt: activity.RecordedAtTime,
     });
   }

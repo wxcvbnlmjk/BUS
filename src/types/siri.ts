@@ -20,6 +20,11 @@ export interface VehicleActivity {
       Latitude: number;
     };
     Bearing?: number;
+    Delay?: string;
+    DestinationRef?: { value: string };
+    MonitoredCall?: {
+      StopPointRef?: { value: string };
+    };
     VehicleRef?: { value: string };
     DataSource?: string;
   };
@@ -32,6 +37,8 @@ export interface BusVehicle {
   lat: number;
   lng: number;
   bearing?: number;
-  direction?: string;
+  destinationStopName?: string;
+  nextStopName?: string;
+  delayLabel?: string;
   recordedAt: string;
 }
