@@ -9,7 +9,6 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    assetsInclude: ['**/*.html'],
     server: {
       host: true,
       port: 5173,
