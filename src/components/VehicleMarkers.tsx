@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { LayerGroup, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { BusVehicle } from '../types/siri';
+import { sortLineNumbers } from '../utils/lineRef';
 
 const FULL_SCALE = 1;
 const MIN_ZOOM_SCALE = 0.5;
@@ -54,13 +55,24 @@ function createVehicleIcon(
 
 interface VehicleMarkersProps {
   vehicles: BusVehicle[];
-  selectedLine: string;
+  selectedLines: string[];
 }
 
-export function VehicleMarkers({ vehicles, selectedLine }: VehicleMarkersProps) {
+export function VehicleMarkers({
+  vehicles,
+  selectedLines,
+}: VehicleMarkersProps) {
   const map = useMap();
   const [zoom, setZoom] = useState(() => map.getZoom());
-  const showAll = selectedLine === 'all';
+  const showAll =
+    selectedLines.includes('all') || selectedLines.length === 0;
+
+  const normalizedSelectedLines = useMemo(() => {
+    if (showAll) return ['all'];
+    const unique = Array.from(new Set(selectedLines));
+    unique.sort(sortLineNumbers);
+    return unique;
+  }, [selectedLines, showAll]);
 
   useEffect(() => {
     const updateZoom = () => setZoom(map.getZoom());
@@ -77,8 +89,9 @@ export function VehicleMarkers({ vehicles, selectedLine }: VehicleMarkersProps) 
 
   const visibleVehicles = useMemo(() => {
     if (showAll) return vehicles;
-    return vehicles.filter((v) => v.lineNumber === selectedLine);
-  }, [vehicles, selectedLine, showAll]);
+    const selectedSet = new Set(normalizedSelectedLines);
+    return vehicles.filter((v) => selectedSet.has(v.lineNumber));
+  }, [vehicles, normalizedSelectedLines, showAll]);
 
   const getIcon = useMemo(() => {
     const cache = new Map<string, L.DivIcon>();
@@ -96,11 +109,13 @@ export function VehicleMarkers({ vehicles, selectedLine }: VehicleMarkersProps) 
     };
   }, [markerScale, scaleKey]);
 
+  const selectionKey = normalizedSelectedLines.join(',');
+
   return (
-    <LayerGroup key={selectedLine}>
+    <LayerGroup key={selectionKey}>
       {visibleVehicles.map((vehicle) => (
         <Marker
-          key={`${selectedLine}-${scaleKey}-${vehicle.id}`}
+          key={`${selectionKey}-${scaleKey}-${vehicle.id}`}
           position={[vehicle.lat, vehicle.lng]}
           icon={getIcon(vehicle)}
         >
@@ -121,7 +136,7 @@ export function VehicleMarkers({ vehicles, selectedLine }: VehicleMarkersProps) 
                 </tr>
                 <tr>
                   <td>{(vehicle.delayLabel ?? '-').slice(0,1)==="-" ? 'Avance': 'Retard'}</td>
-                  <td>{(vehicle.delayLabel ?? '-').slice(0,1)==="-" ? (vehicle.delayLabel ?? '-').slice(1,10): (vehicle.delayLabel ?? '-')}</td>
+                  <td>{vehicle.delayLabel ?? '-'}</td>
                 </tr>
               </tbody>
             </table>

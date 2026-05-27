@@ -1,4 +1,4 @@
-# TCL — Bus en temps réel (Grand Lyon)
+# Bus en direct (Grand Lyon)
 
 Carte OpenStreetMap (Leaflet) affichant les positions en temps réel des véhicules TCL via l’API SIRI-Lite de Grand Lyon.
 

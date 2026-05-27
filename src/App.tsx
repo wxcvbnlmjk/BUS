@@ -28,9 +28,25 @@ const theme = createTheme({
 
 function App() {
   const [vehicles, setVehicles] = useState<BusVehicle[]>([]);
-  const [selectedLine, setSelectedLine] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'all';
-    return window.localStorage.getItem('tcl_selectedLine') ?? 'all';
+  const [selectedLines, setSelectedLines] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return ['all'];
+
+    // Nouveau stockage: tableau
+    const rawMulti = window.localStorage.getItem('tcl_selectedLines');
+    if (rawMulti) {
+      try {
+        const parsed = JSON.parse(rawMulti);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {
+        // Ignore si localStorage contient une valeur invalide
+      }
+    }
+
+    // Compatibilité: ancien stockage (string)
+    const legacy = window.localStorage.getItem('tcl_selectedLine');
+    if (legacy) return legacy === 'all' ? ['all'] : [legacy];
+
+    return ['all'];
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,11 +74,18 @@ function App() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      window.localStorage.setItem('tcl_selectedLine', selectedLine);
+      window.localStorage.setItem('tcl_selectedLines', JSON.stringify(selectedLines));
     } catch {
       // localStorage peut être bloqué en mode navigation privée
     }
-  }, [selectedLine]);
+  }, [selectedLines]);
+
+  const showAll = selectedLines.includes('all') || selectedLines.length === 0;
+  const normalizedSelectedLines = useMemo(() => {
+    if (showAll) return ['all'];
+    // Unicité + stable pour éviter des rerenders inutiles
+    return Array.from(new Set(selectedLines));
+  }, [selectedLines, showAll]);
 
   const availableLines = useMemo(() => {
     const lines = new Set(vehicles.map((v) => v.lineNumber));
@@ -70,30 +93,33 @@ function App() {
   }, [vehicles]);
 
   const filteredVehicles = useMemo(() => {
-    if (selectedLine === 'all') return vehicles;
-    return vehicles.filter((v) => v.lineNumber === selectedLine);
-  }, [vehicles, selectedLine]);
+    if (showAll) return vehicles;
+    const selectedSet = new Set(normalizedSelectedLines);
+    return vehicles.filter((v) => selectedSet.has(v.lineNumber));
+  }, [vehicles, normalizedSelectedLines, showAll]);
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <AppBar position="static" elevation={1}>
+        <AppBar position="static" elevation={1} style={{ paddingBottom: '10px'   }}>
           <Toolbar sx={{ gap: 2, flexWrap: 'wrap' }}>
-            <Typography variant="h6" component="h1" sx={{ flexGrow: 1 }}>
-              TCL — Bus en temps réel
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Typography variant="h6" component="h1" sx={{ flexGrow: 1 , paddingTop: '30px' }}>
+              Bus en direct
             </Typography>
-            <LineFilter
+            <LineFilter 
               lines={availableLines}
-              selectedLine={selectedLine}
-              onChange={setSelectedLine}
+              selectedLines={normalizedSelectedLines}
+              onChange={(lines) => setSelectedLines(lines)}
               vehicleCount={filteredVehicles.length}
             />
             {lastUpdate && (
-              <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                MAJ {lastUpdate.toLocaleTimeString('fr-FR')}
+              <Typography variant="caption" sx={{ opacity: 0.9 , paddingTop: '40px' }}>
+                Maj. {lastUpdate.toLocaleTimeString('fr-FR')}
               </Typography>
             )}
+            </div>
           </Toolbar>
         </AppBar>
 
@@ -118,7 +144,7 @@ function App() {
           ) : (
             <BusMap
               vehicles={filteredVehicles}
-              selectedLine={selectedLine}
+              selectedLines={normalizedSelectedLines}
             />
           )}
         </Box>

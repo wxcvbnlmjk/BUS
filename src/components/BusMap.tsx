@@ -8,10 +8,10 @@ const DEFAULT_ZOOM = 12;
 
 interface BusMapProps {
   vehicles: BusVehicle[];
-  selectedLine: string;
+  selectedLines: string[];
 }
 
-export function BusMap({ vehicles, selectedLine }: BusMapProps) {
+export function BusMap({ vehicles, selectedLines }: BusMapProps) {
   return (
 
     <div style={{ position: 'relative', width: '100%', height: '100svh' }}>
@@ -49,9 +49,9 @@ export function BusMap({ vehicles, selectedLine }: BusMapProps) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <MapViewController vehicles={vehicles} selectedLine={selectedLine} />
-      <VehicleMarkers vehicles={vehicles} selectedLine={selectedLine} />
-    </MapContainer>*
+      <MapViewController vehicles={vehicles} selectedLines={selectedLines} />
+      <VehicleMarkers vehicles={vehicles} selectedLines={selectedLines} />
+    </MapContainer>
     </div>
   );
 }

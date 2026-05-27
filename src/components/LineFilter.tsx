@@ -8,19 +8,40 @@ import {
 
 interface LineFilterProps {
   lines: string[];
-  selectedLine: string;
-  onChange: (line: string) => void;
+  selectedLines: string[];
+  onChange: (lines: string[]) => void;
   vehicleCount: number;
 }
 
 export function LineFilter({
   lines,
-  selectedLine,
+  selectedLines,
   onChange,
   vehicleCount,
 }: LineFilterProps) {
-  const handleChange = (event: SelectChangeEvent) => {
-    onChange(event.target.value);
+  const handleChange = (event: SelectChangeEvent<string[]>) => {
+    const value = event.target.value;
+    const next = Array.isArray(value) ? value : [value];
+
+    if (next.length === 0) {
+      onChange(['all']);
+      return;
+    }
+
+    if (next.includes('all')) {
+      // Si "Toutes" était déjà sélectionné et qu'on ajoute une ligne,
+      // MUI renvoie souvent ["all", "X"] : on interprète ça comme "X".
+      if (selectedLines.includes('all') && next.length > 1) {
+        onChange(next.filter((v) => v !== 'all'));
+        return;
+      }
+
+      // Sinon, l'utilisateur a choisi "Toutes" → on écrase le reste.
+      onChange(['all']);
+      return;
+    }
+
+    onChange(next.filter((v) => v !== 'all'));
   };
 
   return (
@@ -51,9 +72,19 @@ export function LineFilter({
       <Select
         labelId="line-filter-label"
         id="line-filter"
-        value={selectedLine}
+        multiple
+        value={selectedLines}
         label="Ligne de bus"
         onChange={handleChange}
+        renderValue={(selected) => {
+          const arr = Array.isArray(selected) ? selected : [selected];
+          if (arr.includes('all')) return `Toutes(${vehicleCount})`;
+          const max = 3;
+          if (arr.length <= max) return `${arr.join(', ')}`;
+          const head = arr.slice(0, max).join(', ');
+          const remaining = arr.length - max;
+          return `${head}… (+${remaining})`;
+        }}
         MenuProps={{
           PaperProps: {
             sx: {
@@ -78,7 +109,11 @@ export function LineFilter({
           Toutes({vehicleCount})
         </MenuItem>
         {lines.map((line) => (
-          <MenuItem key={line} value={line} sx={{ color: '#ffffff' ,size: '5px'}}>
+          <MenuItem
+            key={line}
+            value={line}
+            sx={{ color: '#ffffff' }}
+          >
             Ligne {line}
           </MenuItem>
         ))}

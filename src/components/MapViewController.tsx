@@ -9,22 +9,24 @@ const LINE_ZOOM = 15;
 
 interface MapViewControllerProps {
   vehicles: BusVehicle[];
-  selectedLine: string;
+  selectedLines: string[];
 }
 
 export function MapViewController({
   vehicles,
-  selectedLine,
+  selectedLines,
 }: MapViewControllerProps) {
   const map = useMap();
+  const showAll =
+    selectedLines.includes('all') || selectedLines.length === 0;
 
   useEffect(() => {
-    if (selectedLine !== 'all') return;
+    if (!showAll) return;
     map.flyTo(LYON_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
-  }, [map, selectedLine]);
+  }, [map, showAll]);
 
   useEffect(() => {
-    if (selectedLine === 'all' || vehicles.length === 0) return;
+    if (showAll || vehicles.length === 0) return;
 
     if (vehicles.length === 1) {
       const bus = vehicles[0];
@@ -40,7 +42,7 @@ export function MapViewController({
       duration: 0.8,
       maxZoom: LINE_ZOOM,
     });
-  }, [map, selectedLine, vehicles]);
+  }, [map, showAll, vehicles]);
 
   return null;
 }
