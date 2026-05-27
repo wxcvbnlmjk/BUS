@@ -121,7 +121,7 @@ export function VehicleMarkers({ vehicles, selectedLine }: VehicleMarkersProps) 
                 </tr>
                 <tr>
                   <td>{(vehicle.delayLabel ?? '-').slice(0,1)==="-" ? 'Avance': 'Retard'}</td>
-                  <td>{vehicle.delayLabel ?? '-'}</td>
+                  <td>{(vehicle.delayLabel ?? '-').slice(0,1)==="-" ? (vehicle.delayLabel ?? '-').slice(1,10): (vehicle.delayLabel ?? '-')}</td>
                 </tr>
               </tbody>
             </table>
