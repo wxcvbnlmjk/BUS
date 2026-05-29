@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { LayerGroup, Marker, Popup, useMap } from 'react-leaflet';
+import { useMemo, useState } from 'react';
+import {
+  CircleMarker,
+  LayerGroup,
+  Marker,
+  Popup,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet';
 import L from 'leaflet';
 import type { BusVehicle } from '../types/siri';
 import { sortLineNumbers } from '../utils/lineRef';
@@ -8,6 +15,9 @@ const FULL_SCALE = 1;
 const MIN_ZOOM_SCALE = 0.5;
 const ZOOM_SCALE_MIN = 11;
 const ZOOM_SCALE_MAX = 17;
+/** En mode « Toutes », en dessous de ce zoom : uniquement des points rouges */
+const ALL_MODE_DOT_MAX_ZOOM = 13;
+const DOT_RADIUS_PX = 4;
 
 /** Échelle 0.5 (dézoomé) → 1.0 (zoomé), uniquement en mode « Toutes » */
 export function getZoomScale(zoom: number): number {
@@ -53,6 +63,37 @@ function createVehicleIcon(
   });
 }
 
+function VehiclePopup({ vehicle }: { vehicle: BusVehicle }) {
+  const delay = vehicle.delayLabel ?? '-';
+  const isEarly = delay.slice(0, 1) === '-';
+  return (
+    <Popup>
+      <table>
+        <tbody>
+          <tr>
+            <td>
+              <strong>Ligne {vehicle.lineNumber}</strong>
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>Destination</td>
+            <td>{vehicle.destinationStopName ?? '-'}</td>
+          </tr>
+          <tr>
+            <td>Arrêt</td>
+            <td>{vehicle.nextStopName ?? '-'}</td>
+          </tr>
+          <tr>
+            <td>{isEarly ? 'Avance' : 'Retard'}</td>
+            <td>{isEarly ? delay.slice(1, 10) : delay}</td>
+          </tr>
+        </tbody>
+      </table>
+    </Popup>
+  );
+}
+
 interface VehicleMarkersProps {
   vehicles: BusVehicle[];
   selectedLines: string[];
@@ -64,6 +105,14 @@ export function VehicleMarkers({
 }: VehicleMarkersProps) {
   const map = useMap();
   const [zoom, setZoom] = useState(() => map.getZoom());
+
+  useMapEvents({
+    zoom: () => setZoom(map.getZoom()),
+    zoomend: () => setZoom(map.getZoom()),
+    zoomanim: () => setZoom(map.getZoom()),
+    moveend: () => setZoom(map.getZoom()),
+  });
+
   const showAll =
     selectedLines.includes('all') || selectedLines.length === 0;
 
@@ -74,18 +123,13 @@ export function VehicleMarkers({
     return unique;
   }, [selectedLines, showAll]);
 
-  useEffect(() => {
-    const updateZoom = () => setZoom(map.getZoom());
-    map.on('zoom', updateZoom);
-    map.on('zoomend', updateZoom);
-    return () => {
-      map.off('zoom', updateZoom);
-      map.off('zoomend', updateZoom);
-    };
-  }, [map]);
-
   const markerScale = showAll ? getZoomScale(zoom) : FULL_SCALE;
-  const scaleKey = showAll ? markerScale.toFixed(2) : 'full';
+  const useCompactDot = showAll && zoom < ALL_MODE_DOT_MAX_ZOOM;
+  const scaleKey = showAll
+    ? useCompactDot
+      ? 'dot'
+      : `full-${markerScale.toFixed(2)}`
+    : 'full';
 
   const visibleVehicles = useMemo(() => {
     if (showAll) return vehicles;
@@ -102,45 +146,56 @@ export function VehicleMarkers({
       if (!cache.has(key)) {
         cache.set(
           key,
-          createVehicleIcon(vehicle.lineNumber, vehicle.bearing, markerScale),
+          createVehicleIcon(
+            vehicle.lineNumber,
+            vehicle.bearing,
+            showAll ? markerScale : FULL_SCALE,
+          ),
         );
       }
       return cache.get(key)!;
     };
-  }, [markerScale, scaleKey]);
+  }, [markerScale, scaleKey, showAll]);
 
   const selectionKey = normalizedSelectedLines.join(',');
+  const layerKey = `${selectionKey}-${useCompactDot ? 'dots' : scaleKey}`;
+
+  const dotStyle = useMemo(
+    () => ({
+      color: '#c8102e',
+      fillColor: '#c8102e',
+      fillOpacity: 1,
+      weight: 0,
+    }),
+    [],
+  );
+
+  if (useCompactDot) {
+    return (
+      <LayerGroup key={layerKey}>
+        {visibleVehicles.map((vehicle) => (
+          <CircleMarker
+            key={`${layerKey}-${vehicle.id}`}
+            center={[vehicle.lat, vehicle.lng]}
+            radius={DOT_RADIUS_PX}
+            pathOptions={dotStyle}
+          >
+            <VehiclePopup vehicle={vehicle} />
+          </CircleMarker>
+        ))}
+      </LayerGroup>
+    );
+  }
 
   return (
-    <LayerGroup key={selectionKey}>
+    <LayerGroup key={layerKey}>
       {visibleVehicles.map((vehicle) => (
         <Marker
-          key={`${selectionKey}-${scaleKey}-${vehicle.id}`}
+          key={`${layerKey}-${vehicle.id}`}
           position={[vehicle.lat, vehicle.lng]}
           icon={getIcon(vehicle)}
         >
-          <Popup>
-            <table>
-              <tbody>
-                <tr>
-                  <td><strong>Ligne {vehicle.lineNumber}</strong></td>
-                  <td />
-                </tr>
-                <tr>
-                  <td>Destination</td>
-                  <td>{vehicle.destinationStopName ?? '-'}</td>
-                </tr>
-                <tr>
-                  <td>Arrêt</td>
-                  <td>{vehicle.nextStopName ?? '-'}</td>
-                </tr>
-                <tr>
-                  <td>{(vehicle.delayLabel ?? '-').slice(0,1)==="-" ? 'Avance': 'Retard'}</td>
-                  <td>{(vehicle.delayLabel ?? '-').slice(0,1)==="-" ? (vehicle.delayLabel ?? '-').slice(1,10): (vehicle.delayLabel ?? '-')}</td>
-                </tr>
-              </tbody>
-            </table>
-          </Popup>
+          <VehiclePopup vehicle={vehicle} />
         </Marker>
       ))}
     </LayerGroup>

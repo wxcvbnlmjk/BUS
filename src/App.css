@@ -42,3 +42,10 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   line-height: 1;
 }
+
+/* Mode « Toutes » dézoomé : simple point sans bordure ni numéro */
+.bus-marker--dot .bus-marker-dot {
+  border-radius: 50%;
+  background: #c8102e;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
