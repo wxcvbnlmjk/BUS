@@ -1,6 +1,6 @@
 import { getArretsIndex, getStopName } from './arrets';
 import type { BusVehicle, SiriVehicleMonitoringResponse } from '../types/siri';
-import { formatSiriDelay } from '../utils/delay';
+import { formatSiriDelay, parseSiriDelayToSeconds } from '../utils/delay';
 import { parseLineNumber } from '../utils/lineRef';
 
 const API_URL = '/api/siri/vehicle-monitoring.json';
@@ -53,6 +53,7 @@ export async function fetchVehicles(): Promise<BusVehicle[]> {
         journey.MonitoredCall?.StopPointRef?.value,
       ),
       delayLabel: formatSiriDelay(journey.Delay),
+      delaySeconds: parseSiriDelayToSeconds(journey.Delay) ?? undefined,
       recordedAt: activity.RecordedAtTime,
     });
   }

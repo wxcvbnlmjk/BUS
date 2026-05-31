@@ -40,5 +40,7 @@ export interface BusVehicle {
   destinationStopName?: string;
   nextStopName?: string;
   delayLabel?: string;
+  /** Retard en secondes (négatif = avance) */
+  delaySeconds?: number;
   recordedAt: string;
 }

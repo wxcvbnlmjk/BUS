@@ -10,6 +10,8 @@ import {
 import L from 'leaflet';
 import type { BusVehicle } from '../types/siri';
 import { sortLineNumbers } from '../utils/lineRef';
+import { parseDelayLabelToSeconds } from '../utils/delay';
+import { DELAY_COLORS, getDelayDotColor } from '../utils/delayColor';
 
 const FULL_SCALE = 1;
 const MIN_ZOOM_SCALE = 0.5;
@@ -28,17 +30,22 @@ export function getZoomScale(zoom: number): number {
   return MIN_ZOOM_SCALE + t * (FULL_SCALE - MIN_ZOOM_SCALE);
 }
 
+function getVehicleDelaySeconds(vehicle: BusVehicle): number | null {
+  return vehicle.delaySeconds ?? parseDelayLabelToSeconds(vehicle.delayLabel);
+}
+
 function createVehicleIcon(
   lineNumber: string,
   bearing: number | undefined,
   scale: number,
+  markerColor: string,
 ): L.DivIcon {
   const hasBearing = bearing != null;
   const rotation = hasBearing ? `transform: rotate(${bearing}deg);` : '';
   const pointerBorder = Math.max(4, Math.round(8 * scale));
   const pointerHeight = Math.max(7, Math.round(14 * scale));
   const pointer = hasBearing
-    ? `<div class="bus-marker-pointer" style="margin-bottom:-${Math.max(1, Math.round(2 * scale))}px;border-left:${pointerBorder}px solid transparent;border-right:${pointerBorder}px solid transparent;border-bottom:${pointerHeight}px solid #c8102e;" aria-hidden="true"></div>`
+    ? `<div class="bus-marker-pointer" style="margin-bottom:-${Math.max(1, Math.round(2 * scale))}px;border-left:${pointerBorder}px solid transparent;border-right:${pointerBorder}px solid transparent;border-bottom:${pointerHeight}px solid ${markerColor};" aria-hidden="true"></div>`
     : '';
 
   const labelSize = Math.max(16, Math.round(32 * scale));
@@ -54,13 +61,60 @@ function createVehicleIcon(
     html: `
       <div class="bus-marker-oriented" style="${rotation} transform-origin:${iconW / 2}px ${originY}px;">
         ${pointer}
-        <div class="bus-marker-label" style="color:#ffffff;width:${labelSize}px;height:${labelSize}px;font-size:${fontSize}px;border-width:${borderWidth}px;">${lineNumber}</div>
+        <div class="bus-marker-label" style="background:${markerColor};color:#ffffff;width:${labelSize}px;height:${labelSize}px;font-size:${fontSize}px;border-width:${borderWidth}px;">${lineNumber}</div>
       </div>
     `,
     iconSize: [iconW, iconH],
     iconAnchor: [iconW / 2, anchorY],
     popupAnchor: [0, -anchorY],
   });
+}
+
+function coloredLabel(text: string, color: string) {
+  return (
+    <span style={{ color, fontWeight: 'bold' }}>{text}</span>
+  );
+}
+
+function DelayColorLegend() {
+  const c = DELAY_COLORS;
+  return (
+    <>
+      <tr>
+        <td colSpan={3}>{coloredLabel('Échelle de couleurs', '#000000')}</td>
+      </tr>
+      <tr>
+        <td>{coloredLabel('En avance', c.blue)}</td>
+        <td>→</td>
+        <td>{coloredLabel('retard 10 s', c.blue)}</td>
+      </tr>
+      <tr>
+        <td>{coloredLabel('Retard 10 s', c.blue)}</td>
+        <td>→</td>
+        <td>{coloredLabel('1 min', c.green)}</td>
+      </tr>
+      <tr>
+        <td>{coloredLabel('Retard 1 min', c.green)}</td>
+        <td>→</td>
+        <td>{coloredLabel('1 min 30 s', c.yellow)}</td>
+      </tr>
+      <tr>
+        <td>{coloredLabel('Retard 1 min 30 s', c.yellow)}</td>
+        <td>→</td>
+        <td>{coloredLabel('2 min', c.orange)}</td>
+      </tr>
+      <tr>
+        <td>{coloredLabel('Retard 2 min', c.orange)}</td>
+        <td>→</td>
+        <td>{coloredLabel('2 min 30 s', c.red)}</td>
+      </tr>
+      <tr>
+        <td>{coloredLabel('Retard', c.redDark)}</td>
+        <td>+</td>
+        <td>{coloredLabel('2 min 30 s', c.redDark)}</td>
+      </tr>
+    </>
+  );
 }
 
 function VehiclePopup({ vehicle }: { vehicle: BusVehicle }) {
@@ -75,19 +129,27 @@ function VehiclePopup({ vehicle }: { vehicle: BusVehicle }) {
               <strong>Ligne {vehicle.lineNumber}</strong>
             </td>
             <td />
+            <td />
           </tr>
           <tr>
             <td>Destination</td>
+            <td />
             <td>{vehicle.destinationStopName ?? '-'}</td>
           </tr>
           <tr>
             <td>Arrêt</td>
+            <td />
             <td>{vehicle.nextStopName ?? '-'}</td>
           </tr>
           <tr>
             <td>{isEarly ? 'Avance' : 'Retard'}</td>
+            <td />
             <td>{isEarly ? delay.slice(1, 10) : delay}</td>
           </tr>
+          <tr>
+            <td colSpan={3}></td>
+          </tr>
+          <DelayColorLegend />
         </tbody>
       </table>
     </Popup>
@@ -142,7 +204,8 @@ export function VehicleMarkers({
     return (vehicle: BusVehicle) => {
       const bearingKey =
         vehicle.bearing != null ? Math.round(vehicle.bearing) : 'na';
-      const key = `${vehicle.lineNumber}-${bearingKey}-${scaleKey}`;
+      const markerColor = getDelayDotColor(getVehicleDelaySeconds(vehicle));
+      const key = `${vehicle.lineNumber}-${bearingKey}-${scaleKey}-${markerColor}`;
       if (!cache.has(key)) {
         cache.set(
           key,
@@ -150,6 +213,7 @@ export function VehicleMarkers({
             vehicle.lineNumber,
             vehicle.bearing,
             showAll ? markerScale : FULL_SCALE,
+            markerColor,
           ),
         );
       }
@@ -160,15 +224,15 @@ export function VehicleMarkers({
   const selectionKey = normalizedSelectedLines.join(',');
   const layerKey = `${selectionKey}-${useCompactDot ? 'dots' : scaleKey}`;
 
-  const dotStyle = useMemo(
-    () => ({
-      color: '#c8102e',
-      fillColor: '#c8102e',
+  const getDotPathOptions = (vehicle: BusVehicle) => {
+    const fillColor = getDelayDotColor(getVehicleDelaySeconds(vehicle));
+    return {
+      color: fillColor,
+      fillColor,
       fillOpacity: 1,
       weight: 0,
-    }),
-    [],
-  );
+    };
+  };
 
   if (useCompactDot) {
     return (
@@ -178,7 +242,7 @@ export function VehicleMarkers({
             key={`${layerKey}-${vehicle.id}`}
             center={[vehicle.lat, vehicle.lng]}
             radius={DOT_RADIUS_PX}
-            pathOptions={dotStyle}
+            pathOptions={getDotPathOptions(vehicle)}
           >
             <VehiclePopup vehicle={vehicle} />
           </CircleMarker>

@@ -9,6 +9,35 @@ function parseSiriDurationToSeconds(delay: string): number | null {
   return sign * (hours * 3600 + minutes * 60 + seconds);
 }
 
+/** Retard en secondes : négatif = avance, positif = retard */
+export function parseSiriDelayToSeconds(delay?: string): number | null {
+  if (!delay) return null;
+  return parseSiriDurationToSeconds(delay);
+}
+
+/** Reparse le libellé affiché (ex. « -30s », « 1 min 15s ») */
+export function parseDelayLabelToSeconds(label?: string): number | null {
+  if (!label || label === '-') return null;
+
+  const trimmed = label.trim();
+  const isNegative = trimmed.startsWith('-');
+  const rest = (isNegative ? trimmed.slice(1) : trimmed).trim();
+
+  const minSec = rest.match(/^(\d+)\s*min\s*(\d+)s$/i);
+  if (minSec) {
+    const total = Number(minSec[1]) * 60 + Number(minSec[2]);
+    return isNegative ? -total : total;
+  }
+
+  const onlySec = rest.match(/^(\d+)s$/i);
+  if (onlySec) {
+    const total = Number(onlySec[1]);
+    return isNegative ? -total : total;
+  }
+
+  return null;
+}
+
 export function formatSiriDelay(delay?: string): string | undefined {
   if (!delay) return undefined;
   const totalSeconds = parseSiriDurationToSeconds(delay);
