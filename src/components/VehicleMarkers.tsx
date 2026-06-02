@@ -81,37 +81,33 @@ function DelayColorLegend() {
   return (
     <>
       <tr>
-        <td colSpan={3}>{coloredLabel('Échelle de couleurs', '#000000')}</td>
+        <td colSpan={3}>{coloredLabel('Échelle de couleurs', c.black)}</td>
       </tr>
       <tr>
-        <td>{coloredLabel('En avance', c.blue)}</td>
+        <td colSpan={3}>{coloredLabel('En avance', c.blue)}</td>
+      </tr>
+      <tr>
+        <td>{coloredLabel('Retard jusqu\'à 2 min', c.blue)}</td>
         <td>→</td>
-        <td>{coloredLabel('retard 10 s', c.blue)}</td>
+        <td>{coloredLabel('vert', c.green)}</td>
       </tr>
       <tr>
-        <td>{coloredLabel('Retard 10 s', c.blue)}</td>
+        <td>{coloredLabel('Retard 2 min', c.green)}</td>
         <td>→</td>
-        <td>{coloredLabel('1 min', c.green)}</td>
+        <td>{coloredLabel('4 min', c.yellow)}</td>
       </tr>
       <tr>
-        <td>{coloredLabel('Retard 1 min', c.green)}</td>
+        <td>{coloredLabel('Retard 4 min', c.yellow)}</td>
         <td>→</td>
-        <td>{coloredLabel('1 min 30 s', c.yellow)}</td>
+        <td>{coloredLabel('6 min', c.orange)}</td>
       </tr>
       <tr>
-        <td>{coloredLabel('Retard 1 min 30 s', c.yellow)}</td>
+        <td>{coloredLabel('Retard 6 min', c.orange)}</td>
         <td>→</td>
-        <td>{coloredLabel('2 min', c.orange)}</td>
+        <td>{coloredLabel('10 min', c.red)}</td>
       </tr>
       <tr>
-        <td>{coloredLabel('Retard 2 min', c.orange)}</td>
-        <td>→</td>
-        <td>{coloredLabel('2 min 30 s', c.red)}</td>
-      </tr>
-      <tr>
-        <td>{coloredLabel('Retard', c.redDark)}</td>
-        <td>+</td>
-        <td>{coloredLabel('2 min 30 s', c.redDark)}</td>
+        <td colSpan={3}>{coloredLabel('Retard de plus de 10 min', c.black)}</td>
       </tr>
     </>
   );
