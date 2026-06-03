@@ -48,11 +48,11 @@ Tronçons de voirie colorés selon l’état du trafic (jeu **pvotrafic**, Grand
 | Code `etat` | Signification | Affichage carte |
 |-------------|---------------|-----------------|
 | `G` | Fluide | Masqué (carte allégée) |
-| `V` | Circulation normale | Masqué |
+| `V` | Circulation normale | Masqué (Vert)|
 | `O` | Trafic dense | Orange |
 | `R` | Congestion | Rouge |
-| `N` | Non renseigné | Gris |
-| `*` | Sans mesure | Gris clair |
+| `N` | Non renseigné | Masqué (Gris) |
+| `*` | Sans mesure | Masqué (Gris clair) |
 
 Clic sur un tronçon : popup (libellé, état, vitesse, date de mise à jour).
 

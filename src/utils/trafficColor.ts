@@ -1,5 +1,5 @@
 /** États masqués sur la carte (trafic fluide / circulation normale) */
-const HIDDEN_ETATS = new Set(['G', 'V']);
+const HIDDEN_ETATS = new Set(['G', 'V', 'N', '*']);
 
 export function isTrafficEtatVisible(etat?: string): boolean {
   if (!etat) return true;
