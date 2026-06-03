@@ -124,7 +124,7 @@ Les API Grand Lyon ne sont en général pas appelables directement depuis le nav
 | Chemin front | Rôle |
 |--------------|------|
 | `/api/siri/vehicle-monitoring.json` | Function `vehicle-monitoring` (auth `GRANDLYON_USER` / `GRANDLYON_PASSWORD`) |
-| `/api/traffic/items` | Redirect vers function `road-traffic` (si déployée) |
+| `/api/traffic/items` | Function `road-traffic` (proxy OGC pvotrafic, sans auth) |
 
 ### Étapes
 
@@ -154,6 +154,7 @@ src/
     trafficColor.ts          # Couleurs état voirie
 netlify/functions/
   vehicle-monitoring.ts
+  road-traffic.ts
 public/
   arrets.json
 ```
