@@ -1,5 +1,6 @@
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { MapViewController } from './MapViewController';
+import { RoadTrafficLayer } from './RoadTrafficLayer';
 import { VehicleMarkers } from './VehicleMarkers';
 import type { BusVehicle } from '../types/siri';
 
@@ -49,6 +50,7 @@ export function BusMap({ vehicles, selectedLines }: BusMapProps) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <RoadTrafficLayer />
       <MapViewController vehicles={vehicles} selectedLines={selectedLines} />
       <VehicleMarkers vehicles={vehicles} selectedLines={selectedLines} />
     </MapContainer>

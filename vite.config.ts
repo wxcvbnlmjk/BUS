@@ -21,6 +21,16 @@ export default defineConfig(({ mode }) => {
             path.replace(/^\/api\/siri/, '/siri-lite/2.0'),
           auth: `${apiUser}:${apiPassword}`,
         },
+        '/api/traffic': {
+          target: 'https://data.grandlyon.com',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (path) =>
+            path.replace(
+              /^\/api\/traffic/,
+              '/fr/geoserv/ogc/features/v1/collections/metropole-de-lyon:pvo_patrimoine_voirie.pvotrafic',
+            ),
+        },
       },
     },
   };

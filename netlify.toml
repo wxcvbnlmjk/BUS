@@ -10,6 +10,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/traffic/items"
+  to = "/.netlify/functions/road-traffic"
+  status = 200
+  force = true
+
 # SPA React
 [[redirects]]
   from = "/*"
